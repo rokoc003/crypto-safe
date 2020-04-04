@@ -3,14 +3,14 @@ const {
   set,
   unset,
   reset,
-  changeMasterPassword
+  changeMasterPassword,
 } = require("./lib/commands");
 const {
   askForPassword,
   askForMasterPassword,
-  askQuestion
+  askQuestion,
 } = require("./lib/questions");
-const { readMasterPassword } = require("./lib/passwords");
+const { getMasterPassword } = require("./lib/queries");
 const { verifyHash } = require("./lib/crypto");
 const { connect, close } = require("./lib/db");
 
@@ -20,8 +20,10 @@ async function run() {
   try {
     await connect();
     const answeredMasterPassword = await askForMasterPassword();
+    const masterPassword = await getMasterPassword();
     if (command === "reset") {
-      return reset(answeredMasterPassword);
+      await reset(answeredMasterPassword);
+      return;
     }
     if (command === "change") {
       const answer = await askQuestion(
@@ -32,12 +34,11 @@ async function run() {
       }
 
       const newMasterPassword = await askQuestion(
-        "Please enter new master password:"
+        "Please enter your new master password:"
       );
-      return changeMasterPassword(newMasterPassword);
+      await changeMasterPassword(newMasterPassword, masterPassword);
+      return;
     }
-
-    const masterPassword = readMasterPassword();
 
     if (!verifyHash(answeredMasterPassword, masterPassword)) {
       console.error("You have no access!");
@@ -45,12 +46,12 @@ async function run() {
     }
 
     if (command === "get") {
-      get(key);
+      await get(key, masterPassword);
     } else if (command === "set") {
       const password = await askForPassword(key);
-      set(key, password);
+      await set(key, password, masterPassword);
     } else if (command === "unset") {
-      unset(key);
+      await unset(key);
     } else {
       console.error("Unknown command");
     }
