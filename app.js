@@ -21,10 +21,12 @@ async function run() {
     await connect();
     const answeredMasterPassword = await askForMasterPassword();
     const masterPassword = await getMasterPassword();
+
     if (command === "reset") {
       await reset(answeredMasterPassword);
       return;
     }
+
     if (command === "change") {
       const answer = await askQuestion(
         "Are you sure you want to change your master password? (y/n)"
